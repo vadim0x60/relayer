@@ -10,23 +10,6 @@
             [relayer.core :refer :all])
     (:gen-class))
 
-(def search-timeout 300000) ; 5 minutes
-(def results-timeout 500)
-
-(def searches (atom {}))
-
-(defn search [from to]
-  (let [id (str (java.util.UUID/randomUUID))]
-    (swap! searches
-      #(->> [{:from from
-              :to to
-              :outbound-interval interval
-              :undecided true}]
-          (decide-route)
-          (future)
-          (assoc % id)))
-    id))
-
 (defapi app
   { :swagger
     { :ui "/"
