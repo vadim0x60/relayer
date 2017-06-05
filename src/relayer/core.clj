@@ -3,14 +3,14 @@
             [clojure.string :as string]
             [relayer.config :refer :all]))
 
-(defn read-bracket [tile] (map read-string (string/split tile #"/")))
-(defn write-bracket [[x y p]] (str x "/" y "/" p))
+(defn- read-bracket [tile] (map read-string (string/split tile #"/")))
+(defn- write-bracket [[x y p]] (str x "/" y "/" p))
 
-(defn irange [a b]
+(defn- irange [a b]
   "Inclusive range"
   (range a (inc b)))
 
-(defn tiles-between [target-x1 target-y1 target-x2 target-y2]
+(defn- tiles-between [target-x1 target-y1 target-x2 target-y2]
   "Generates a sequence of tiles on a 2d grid sorted by sum of distances to (x1,y1) and (x2,y2)"
   (assert (not (> target-x1 target-x2)))
   (assert (not (> target-y1 target-y2)))
@@ -38,7 +38,7 @@
          (expand intitial-x1 intitial-x2 intitial-y1 intitial-y2
                  (- intitial-x2 intitial-x1) (- intitial-y2 intitial-y1)))))))
 
-(defn weighted-intercat [outer-step inner-step colls] 
+(defn- weighted-intercat [outer-step inner-step colls] 
   "Something in between lazy-cat and interleave. Lazy."
   ; That's the only reasonable way of concating an infinite sequence of infinite sequences
   (letfn 
@@ -53,7 +53,7 @@
           []))]
     (intercat [] colls)))
 
-(defn brackets-between [city1 city2]
+(defn- brackets-between [city1 city2]
   (let [bracket1 (-> city1 :bracket read-bracket)
         bracket2 (-> city2 :bracket read-bracket)
         [x1 y1 _] (map min bracket1 bracket2)
@@ -65,12 +65,12 @@
         (map (fn [tile] (map (partial conj tile) population-hierarchy)) 
              (tiles-between x1 y1 x2 y2))))))
 
-(defn cities-in-bracket [bracket]
+(defn- cities-in-bracket [bracket]
   (let [city-ids (wcar redis-conn (car/get (str "bracket:" bracket)))]
     (wcar redis-conn :as-pipeline
       (mapv #(car/get (str "city:" %)) city-ids))))
 
-(defn query-cities-between [city1 city2]
+(defn- query-cities-between [city1 city2]
   (for [bracket (brackets-between city1 city2)
         city (cities-in-bracket bracket)]
     city))

@@ -1,12 +1,11 @@
 (ns relayer.handler
   (:require [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer (ok)]
+            [ring.util.http-response :refer (ok not-found)]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.adapter.jetty :as ring]
             
             [schema.core :as s]
 
-            [relayer.language :refer [Location interval]]
             [relayer.core :refer :all])
     (:gen-class))
 
@@ -24,10 +23,16 @@
     (GET "/between/:a/:b" []
       :summary "Get potential stopovers: big cities on a line between a and b"
       :path-params [a :- s/Str, b :- s/Str]
-      :query-params [batch :- s/Int]
+      :query-params [{skip :- s/Int 0} {limit :- s/Int 20}]
       :return s/Any
 
-      (internal-server-error {:reason \"not implemented\"}))))
+      (let [city1 (city a) city2 (city b)]
+        (if (and city1 city2)
+          (->> (cities-between city1 city2)
+               (drop skip)
+               (take limit)
+               (ok))
+          (not-found))))))
 
 (defn -main []
   (let [port (Integer. (or (System/getenv "PORT") "8080"))] 
