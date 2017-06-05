@@ -1,6 +1,8 @@
 (ns relayer.load
   (:require [clojure.java.io :as io]
-            [taoensso.carmine :as car :refer (wcar)]))
+            [taoensso.carmine :as car :refer (wcar)]
+            
+            [relayer.config :refer :all]))
 
 (def fields  [:geonameid :name :asciiname :alternatenames
               :latitude :longitude 
@@ -16,10 +18,7 @@
 
 (defn mapify [coll key-f value-f] (apply hash-map (interleave (map key-f coll) (map value-f coll))))
 
-(def geo-zoom 64)
-(def population-zoom 0.5)
-
-(defn tile [city]
+(defn bracket [city]
   "Locate the city in a 3D (lat-long-population) grid"
   (let [{:keys [latitude longitude population]} city]
     (str (-> longitude (+ 180) (/ 360) (* geo-zoom) (int)) "/" 
@@ -37,15 +36,13 @@
     (io/resource resource-name)
     (io/reader)
     (line-seq)
-    (map (comp #(assoc % :tile (tile %))
+    (map (comp #(assoc % :bracket (bracket %))
                (fn [m] (reduce #(update %1 %2 read-string) 
                                m 
                                [:geonameid :population :longitude :latitude]))
                #(update % :alternatenames (fn [s] (clojure.string/split s #",")))
                mapify-geoname
                #(clojure.string/split % #"\t")))))
-
-(def redis-conn (some->> (System/getenv "REDIS_URL") (hash-map :uri) (hash-map :spec)))
 
 (defn redis-batch [conn coll size f]
   (as-> nil $
@@ -60,60 +57,14 @@
   (redis-batch redis-conn m 300
     (fn [[key value]] (-> (str prefix ":" key) (car/set value)))))
 
-; A slightly opinionated list of
-(def european-countries #{ "AL";bania
-                           "AD";orra
-                           "AT";stria
-                           "BY";elarus
-                           "BE";lgium
-                           "BA";osnia and Herzegovina
-                           "BG";ulgaria
-                           "HR";oatia
-                           "CZ";ech Republic
-                           "DK";enmark
-                           "EE";stonia
-                           "FI";nland
-                           "FR";ance
-                           "DE";utschland
-                           "GI";braltar
-                           "HU";ngary
-                           "IE";rland
-                           "IM";sle of Man
-                           "IT";aly
-                           "LV";atvia
-                           "LI";echtenstein
-                           "LT";ituania
-                           "LU";xemburg
-                           "MK";edonia
-                           "MT";alta
-                           "ME";ntenegro
-                           "NL";etherlands
-                           "NO";rway
-                           "PL";and
-                           "PT";ortugal
-                           "RO";mania
-                           "RU";ssia
-                           "SM";an Marino
-                           "RS";erpska
-                           "SK";lovakia
-                           "SI";lovenia
-                           "ES";pania
-                           "SE";den
-                           "CH";Switzerland
-                           "UA";kraine
-                           "GB";Great Britain
-})
-
-(defn in-europe [city]
-  (contains? european-countries (:country-code city)))
-
 (defn id-lookup [cities] (mapify cities :geonameid identity))
 (defn name-lookup [cities] (mapify cities :name :geonameid))
-(defn tile-lookup [cities] 
-  (apply merge-with into (map #(hash-map (:tile %) [(:geonameid %)]) cities)))
+(defn bracket-lookup [cities] 
+  (apply merge-with into (map #(hash-map (:bracket %) [(:geonameid %)]) cities)))
 
 (defn load! []
-  (let [cities (filter in-europe (initialize-cities "cities15000.txt"))]
+  (let [cities (filter acceptable-city 
+                       (initialize-cities "cities15000.txt"))]
     [(into-redis! "city" (id-lookup cities))
      (into-redis! "name" (name-lookup cities))
-     (into-redis! "tile" (tile-lookup cities))]))
+     (into-redis! "bracket" (bracket-lookup cities))]))
