@@ -26,7 +26,7 @@
       :query-params [{skip :- s/Int 0} {limit :- s/Int 20}]
       :return s/Any
 
-      (let [city1 (city a) city2 (city b)]
+      (let [city1 (city (read-string a)) city2 (city (read-string b))]
         (if (and city1 city2)
           (->> (cities-between city1 city2)
                (drop skip)
