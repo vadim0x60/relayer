@@ -70,3 +70,7 @@
 ; - "export REDIS_URL=YOUR_REDIS_URL" and don't touch the code below
 ; - change the code below to your redis config
 (def redis-conn (some->> (System/getenv "REDIS_URL") (hash-map :uri) (hash-map :spec)))
+
+; ID format
+(defn city-id [city] (format "%d$%d" (-> city :latitude  (* 100) (int))
+                                     (-> city :longitude (* 100) (int))))

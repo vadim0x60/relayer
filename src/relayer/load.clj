@@ -37,6 +37,7 @@
     (io/reader)
     (line-seq)
     (map (comp #(assoc % :bracket (bracket %))
+               #(assoc % :id (city-id %))
                (fn [m] (reduce #(update %1 %2 read-string) 
                                m 
                                [:geonameid :population :longitude :latitude]))
@@ -57,8 +58,9 @@
   (redis-batch redis-conn m 300
     (fn [[key value]] (-> (str prefix ":" key) (car/set value)))))
 
-(defn id-lookup [cities] (mapify cities :geonameid identity))
-(defn name-lookup [cities] (mapify cities :name :geonameid))
+(defn id-lookup [cities] (mapify cities city-id identity))
+(defn geoid-lookup [cities] (mapify cities :geonameid :id))
+(defn name-lookup [cities] (mapify cities :name :id))
 (defn bracket-lookup [cities] 
   (apply merge-with into (map #(hash-map (:bracket %) [(:geonameid %)]) cities)))
 
@@ -66,5 +68,10 @@
   (let [cities (filter acceptable-city 
                        (initialize-cities "cities15000.txt"))]
     [(into-redis! "city" (id-lookup cities))
-     (into-redis! "name" (name-lookup cities))
+     (into-redis! "alias" (name-lookup cities))
+     (into-redis! "alias" (geoid-lookup cities))
      (into-redis! "bracket" (bracket-lookup cities))]))
+
+(defn reload! []
+  (wcar redis-conn (car/flushall))
+  (load!))

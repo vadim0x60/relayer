@@ -78,7 +78,7 @@
 (def cities-between (memoize query-cities-between))
 
 (defn city [query]
-  (if (integer? query) 
+  (if (re-find #"\$" query)
     (wcar redis-conn (car/get (str "city:" query)))
-    (let [id (read-string (wcar redis-conn (car/get (str "name:" query))))]
+    (let [id (wcar redis-conn (car/get (str "alias:" query)))]
       (city id))))
