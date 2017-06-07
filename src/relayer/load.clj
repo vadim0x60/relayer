@@ -43,7 +43,9 @@
                                [:geonameid :population :longitude :latitude]))
                #(update % :alternatenames (fn [s] (clojure.string/split s #",")))
                mapify-geoname
-               #(clojure.string/split % #"\t")))))
+               #(clojure.string/split % #"\t")))
+    (reverse))) ; Hack. Will push bigger cities later
+                ; so that they override smaller ones in case of conflict
 
 (defn redis-batch [conn coll size f]
   (as-> nil $
@@ -62,7 +64,7 @@
 (defn geoid-lookup [cities] (mapify cities :geonameid :id))
 (defn name-lookup [cities] (mapify cities :name :id))
 (defn bracket-lookup [cities] 
-  (apply merge-with into (map #(hash-map (:bracket %) [(:geonameid %)]) cities)))
+  (apply merge-with into (map #(hash-map (:bracket %) [(city-id %)]) cities)))
 
 (defn load! []
   (let [cities (filter acceptable-city 

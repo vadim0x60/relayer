@@ -19,7 +19,7 @@
     (letfn [(expand [x1 y1 x2 y2 width height]
               (if (< (/ width target-width) (/ height target-height))
                 (lazy-cat
-                 (for [y (irange y1 y2) tile [[(dec x1) y] [(inc x1) y]]] tile)
+                 (for [y (irange y1 y2) tile [[(dec x1) y] [(inc x2) y]]] tile)
                  (expand (dec x1) y1 (inc x2) y2 (inc width) height))
                 (lazy-cat
                  (for [x (irange x1 x2) tile [[x (dec y1)] [x (inc y2)]]] tile)
@@ -35,7 +35,7 @@
                     [intitial-x1 intitial-y2]
                     [intitial-x2 intitial-y1]
                     [intitial-x2 intitial-y2]])
-         (expand intitial-x1 intitial-x2 intitial-y1 intitial-y2
+         (expand intitial-x1 intitial-y1 intitial-x2 intitial-y2
                  (- intitial-x2 intitial-x1) (- intitial-y2 intitial-y1)))))))
 
 (defn- weighted-intercat [outer-step inner-step colls] 
@@ -71,9 +71,10 @@
       (mapv #(car/get (str "city:" %)) city-ids))))
 
 (defn- query-cities-between [city1 city2]
-  (for [bracket (brackets-between city1 city2)
-        city (cities-in-bracket bracket)]
-    city))
+  (filter #(and (not= city1 %) (not= city2 %))
+    (for [bracket (brackets-between city1 city2)
+          city (cities-in-bracket bracket)]
+      city)))
 
 (def cities-between (memoize query-cities-between))
 
