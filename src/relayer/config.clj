@@ -74,3 +74,7 @@
 ; ID format
 (defn city-id [city] (format "%d$%d" (-> city :latitude  (* 100) (int))
                                      (-> city :longitude (* 100) (int))))
+
+; An opinionated list of
+(def important-keys [:name :timezone :country-code :latitude :longitude :id :bracket])
+; The /between search will only return these fields in city objects

@@ -6,10 +6,9 @@
             
             [schema.core :as s]
 
-            [relayer.core :refer :all])
+            [relayer.core :refer :all]
+            [relayer.config :refer [important-keys]])
     (:gen-class))
-
-(def last-reload (atom nil))
 
 (defapi app
   { :swagger
@@ -41,6 +40,7 @@
           (->> (cities-between city1 city2)
                (drop skip)
                (take limit)
+               (map #(select-keys % important-keys))
                (ok))
           (not-found))))))
 
