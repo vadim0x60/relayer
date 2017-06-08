@@ -7,6 +7,7 @@ An API that suggests potential stopover cities between a given pair of cities ve
 There are 2 endpoints:
 
 `https://relay-er.herokuapp.com/city/{id}` gives a complete summary of a city identified by `{id}`
+
 `https://relay-er.herokuapp.com/between/{id1}/{id2}` gives a list of cities between `{id1}` and `{id2}`. If neither`?skip=` nor `?limit=` defaults to 20 best (largest and inbetween-est) cities.
 
 `id` can be one of 3 things:
