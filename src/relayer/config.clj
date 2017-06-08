@@ -72,8 +72,8 @@
 (def redis-conn (some->> (System/getenv "REDIS_URL") (hash-map :uri) (hash-map :spec)))
 
 ; ID format
-(defn city-id [city] (format "%d$%d" (-> city :latitude  (* 100) (int))
-                                     (-> city :longitude (* 100) (int))))
+(defn city-id [city] (format "%d$%d" (-> city :latitude  (* 10) (int))
+                                     (-> city :longitude (* 10) (int))))
 
 ; An opinionated list of
 (def important-keys [:name :timezone :country-code :latitude :longitude :id :bracket])
