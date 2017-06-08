@@ -1,6 +1,6 @@
 # Relayer
 
-An API that suggests potential stopover cities between a given pair of cities based only on their location and population. Try it out (and read Swagger documentation) [here](relay-er.herokuapp.com). To spin up your own version, see `config.clj`
+An API that suggests potential stopover cities between a given pair of cities very fast, based only on their location and population. Try it out (and read Swagger documentation) [here](relay-er.herokuapp.com). To spin up your own version, see `config.clj`
 
 ## License
 
